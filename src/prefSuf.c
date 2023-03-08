@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[])
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
 		printf("ERROR: COMMAND LINE INPUTS REQUIRED\n");
 		return(1);
@@ -20,8 +20,16 @@ int main(int argc, char *argv[])
 		return(2);
 	}	
 
+	FILE *rdl;
+	rdl = fopen(argv[2], "r");
+	if (rdl == NULL)
+	{
+		printf("ERROR: COULD NOT FIND RDL\n");
+		return(3);
+	}
+
 	// these will be user input
-	unsigned int startMer = 150;
+	unsigned int startMer = 50;
 
 	// find the longest read (these are supposed to be accurate reads
 	unsigned long s1;
@@ -52,16 +60,40 @@ int main(int argc, char *argv[])
 			minRead = s2 - s1;
 		}
 	}
-	
-	// actual min and max are minus one
+	rewind(inpf);
 	minRead = minRead - 1;
 	maxRead = maxRead - 1;
-	// so we will need to do headmers for values between startMer to maxRead
 
-	for (int i = 0; i < maxRead - startMer + 1; i++)
+	// this is where you run the two files parallelly
+	int holdRlen;
+	char holdBuff;
+	
+
+	// this part gets all the prefixes
+	for (int i = 0; i < maxRead - startMer; i++)
 	{
-		printf("%i\n", startMer + i);
+		printf("HEADMERVAL: %u\n", startMer + i);
+		while (!feof(inpf))
+		{
+			fscanf(inpf, ">%*[^\n]\n");
+			fscanf(rdl, "%i\n", &holdRlen);
+
+			if (holdRlen > startMer + i)
+			{
+				for (int k = 0; k < startMer + i; k++)
+				{
+					fscanf(inpf, "%c", &holdBuff);
+					printf("%c", holdBuff);
+				}
+				printf("\n");
+			}
+			fscanf(inpf, "%*[^>]");
+		}
+		
+		rewind(inpf);
+		rewind(rdl);
 	}
+
 
 	return(0);
 }
