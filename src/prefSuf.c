@@ -3,6 +3,7 @@
 #include <string.h>
 
 // input fasta read file, output prefixes and suffixes in a special order
+char *makeString(int index, char *init, int lenInit);
 
 int main(int argc, char *argv[])
 {
@@ -69,10 +70,14 @@ int main(int argc, char *argv[])
 	char holdBuff;
 	
 
+	FILE *prefix;
+
 	// this part gets all the prefixes
 	for (int i = 0; i < maxRead - startMer; i++)
 	{
-		printf("HEADMERVAL: %u\n", startMer + i);
+
+		prefix = fopen(makeString(i, "PREF", 4), "w"); // this file holds all the prefixes
+
 		while (!feof(inpf))
 		{
 			fscanf(inpf, ">%*[^\n]\n");
@@ -83,17 +88,44 @@ int main(int argc, char *argv[])
 				for (int k = 0; k < startMer + i; k++)
 				{
 					fscanf(inpf, "%c", &holdBuff);
-					printf("%c", holdBuff);
+					fprintf(prefix, "%c", holdBuff);
 				}
-				printf("\n");
+				fprintf(prefix, "\n");
 			}
 			fscanf(inpf, "%*[^>]");
 		}
 		
 		rewind(inpf);
 		rewind(rdl);
+		fclose(prefix);
 	}
 
 
 	return(0);
+}
+
+
+char *makeString(int index, char *init, int lenInit)
+{
+	char *output = malloc(sizeof(char) * (lenInit + 6));
+	char *suff = ".txt";
+	for (int i = 0; i < lenInit + 6; i++)
+	{
+		if (i < lenInit)
+		{
+			output[i] = init[i];
+		}
+		else
+		{
+			if (i == lenInit)
+			{
+				output[i] = 33 + index;
+			}
+			else
+			{
+				output[i] = suff[i - lenInit - 1];
+			}
+		}
+	}
+	return(output);
 }
