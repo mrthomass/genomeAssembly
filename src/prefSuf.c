@@ -7,10 +7,10 @@ char *makeString(int index, char *init, int lenInit);
 
 int main(int argc, char *argv[])
 {
-	if (argc < 3)
+	if (argc < 4)
 	{
 		printf("ERROR: COMMAND LINE INPUTS REQUIRED\n");
-		printf("./prefSuf readFile.fasta rdl.txt\n");
+		printf("./prefSuf readFile.fasta rdl.txt #startVal\n");
 		return(1);
 	}
 	
@@ -39,8 +39,10 @@ int main(int argc, char *argv[])
 		return(4);
 	}
 
-	// these will be user input
-	unsigned int startMer = 120;
+	// also we need a way to check these are integers
+	unsigned int startMer;
+	sscanf(argv[3], "%i", &startMer);
+	
 
 	// find the longest read (these are supposed to be accurate reads
 	unsigned long s1;
@@ -81,16 +83,21 @@ int main(int argc, char *argv[])
 	char *holdPREF;
 	char *holdSUFF;
 	char *holdPRES;
+	char *holdNOT;
 	
 
 	FILE *prefix;
 	FILE *suffix;
+	FILE *notIN;
 
 	for (int i = 0; i < maxRead - startMer; i++)
 	{ // for kmer length in the given area
 
+		printf("WORKING ON: KMER = %i\n", i + startMer);
+
 		prefix = fopen(makeString(i, "PREF", 4), "w"); // possible memory breach here ***
 		suffix = fopen(makeString(i, "SUFF", 4), "w"); // suffix will start being exactly like the prefix, coming from other file though
+		notIN = fopen(makeString(i, "NOT", 3), "w");
 
 		holdPREF = malloc(sizeof(char) * (startMer + i + 1)); // one for the newline
 
@@ -119,6 +126,15 @@ int main(int argc, char *argv[])
 				fprintf(suffix, "%s\n", holdSUFF);
 
 			}
+			else
+			{
+				holdNOT = malloc(sizeof(char) * (holdRlen + 1));
+				fread(holdNOT, sizeof(char), holdRlen, inpf);
+				fprintf(notIN, ">\n%s\n", holdNOT);
+				free(holdNOT);
+			}
+			
+		
 			fscanf(inpf, "%*[^>]");
 			fscanf(inpft, "%*[^>]");
 
@@ -131,15 +147,17 @@ int main(int argc, char *argv[])
 
 		free(holdPREF);
 		free(holdSUFF);
-		
+
 		rewind(inpf);
 		rewind(inpft);
 		rewind(rdl);
 		fclose(prefix);
 		fclose(suffix);
+		fclose(notIN);
 	}
 
 
+	printf("SUCCESSFULLY COMPLETED STORAGE\n");
 	return(0);
 }
 
@@ -158,7 +176,7 @@ char *makeString(int index, char *init, int lenInit)
 		{
 			if (i == lenInit)
 			{
-				output[i] = 33 + index;
+				output[i] = 48 + index; //starts at 48 because 47 is / (problematic)
 			}
 			else
 			{
